@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+<sdf version="1.4">
+    <model name="box_of_cork">
+        <link name="belt_visual">
+            <visual name="visual">
+                <geometry>
+                    <mesh>
+                        <scale>1 1 1</scale>
+                        <uri>model://box_of_cork/meshes/box_of_cork.dae</uri>
+                    </mesh>
+                </geometry>
+            </visual>
+            <collision name="collision">
+                <geometry>
+                    <mesh>
+                        <scale>1 1 1</scale>
+                        <uri>model://box_of_cork/meshes/box_of_cork.dae</uri>
+                    </mesh>
+                </geometry>
+                <pose>0.0 0.0 0 0.0 0.0 0.0</pose>
+            </collision>
+            <static>true</static>
+        </link>
+    </model>
+</sdf>

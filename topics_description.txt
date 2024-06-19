@@ -1,0 +1,36 @@
+Publishers:
+    Defects (String): number of cork stoppers with defect vs without defect
+        /b1/defect_found
+        /b2/defect_found
+        /b3/defect_found
+
+            Example:
+                5/7
+                    5 - Cork with defect
+                    7 - Cork without defect
+    
+    Loadcells (Float32): weight in the load cells.
+                        IF load cell value >=100 THEN robot should empty it
+        /b1/loadcell_defect (Ivan)
+        /b2/loadcell_defect
+        /b3/loadcell_defect
+
+        /b1/loadcell_no_defect (Ivan)
+        /b2/loadcell_no_defect
+        /b3/loadcell_no_defect
+
+            Example:
+                0.60000
+
+Subscribers: sent by the robots to belts
+    Reset (Bool): reset the belts cork stoppers counters
+        /b1/reset
+        /b2/reset
+        /b3/reset
+    
+    Reset load cell (Bool): resets the load cell value of each belt:
+        /b2/loadcell_defect_reset
+        /b3/loadcell_defect_reset
+            b1 is set manually
+    
+    TODO: start and stop belt movement

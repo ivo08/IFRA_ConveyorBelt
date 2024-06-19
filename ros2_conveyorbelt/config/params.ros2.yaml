@@ -1,0 +1,15 @@
+bridge:
+  ros2mqtt:
+    broker:
+      host: localhost
+      port: 1883
+      user: corkai
+      user: corkai123
+    bridge:
+      ros2mqtt:
+        ros_topics:
+          - /b1/defect_found
+        
+      mqtt2ros:
+        mqtt_topics:
+          - /b1/defect_found/mqtt

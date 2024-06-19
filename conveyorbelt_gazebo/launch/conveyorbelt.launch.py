@@ -36,13 +36,19 @@ import os
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch_ros.actions import Node
-from launch.actions import ExecuteProcess, IncludeLaunchDescription, RegisterEventHandler
+from launch.actions import ExecuteProcess, IncludeLaunchDescription, RegisterEventHandler, GroupAction
 from launch.event_handlers import OnProcessExit
 from launch.launch_description_sources import PythonLaunchDescriptionSource
+from launch.substitutions import Command
+from launch_ros.substitutions import FindPackageShare
+from launch.substitutions import Command, FindExecutable, PathJoinSubstitution
+from launch_ros.actions import PushRosNamespace
 import xacro
 import yaml
 
 # LOAD FILE:
+
+
 def load_file(package_name, file_path):
     package_path = get_package_share_directory(package_name)
     absolute_file_path = os.path.join(package_path, file_path)
@@ -53,6 +59,8 @@ def load_file(package_name, file_path):
         # parent of IOError, OSError *and* WindowsError where available.
         return None
 # LOAD YAML:
+
+
 def load_yaml(package_name, file_path):
     package_path = get_package_share_directory(package_name)
     absolute_file_path = os.path.join(package_path, file_path)
@@ -62,24 +70,91 @@ def load_yaml(package_name, file_path):
     except EnvironmentError:
         # parent of IOError, OSError *and* WindowsError where available.
         return None
-    
+
 # ========== **GENERATE LAUNCH DESCRIPTION** ========== #
+
+
 def generate_launch_description():
-    
-    # ***** GAZEBO ***** #   
+
+    # ***** GAZEBO ***** #
     # DECLARE Gazebo WORLD file:
-    conveyorbelt_gazebo = os.path.join(
+    conveyorbelt_gazebo_path = os.path.join(
         get_package_share_directory('conveyorbelt_gazebo'),
         'worlds',
         'conveyorbelt.world')
+
     # DECLARE Gazebo LAUNCH file:
     gazebo = IncludeLaunchDescription(
-                PythonLaunchDescriptionSource([os.path.join(
-                    get_package_share_directory('gazebo_ros'), 'launch'), '/gazebo.launch.py']),
-                launch_arguments={'world': conveyorbelt_gazebo}.items(),
-             )
-    
+        PythonLaunchDescriptionSource([os.path.join(
+            get_package_share_directory('gazebo_ros'), 'launch'), '/gazebo.launch.py']),
+        launch_arguments={'world': conveyorbelt_gazebo_path}.items(),
+    )
+
+    # DECLARE Gazebo ROS2 service: ros2 service call /b2/CONVEYORPOWER conveyorbelt_msgs/srv/ConveyorBeltControl "{power: 5}"
+    service_belt_1 = ExecuteProcess(
+        cmd=['ros2', 'service', 'call', '/b1/CONVEYORPOWER',
+             'conveyorbelt_msgs/srv/ConveyorBeltControl', '{power: 10}'],
+        output='screen'
+    )
+    service_belt_2 = ExecuteProcess(
+        cmd=['ros2', 'service', 'call', '/b2/CONVEYORPOWER',
+             'conveyorbelt_msgs/srv/ConveyorBeltControl', '{power: 10}'],
+        output='screen'
+    )
+    service_belt_3 = ExecuteProcess(
+        cmd=['ros2', 'service', 'call', '/b3/CONVEYORPOWER',
+             'conveyorbelt_msgs/srv/ConveyorBeltControl', '{power: 10}'],
+        output='screen'
+    )
+
+    # DECLARE Gazebo ROS2 run: ros2 run ros2_conveyorbelt SpawnObject.py
+    spawn_object = ExecuteProcess(
+        cmd=['ros2', 'run', 'ros2_conveyorbelt', 'SpawnObject.py'],
+        output='screen'
+    )
+
+    # DECLARE a ros2 run with argumentos to run the defect_detector_node
+    defect_detector_node_1 = ExecuteProcess(
+        cmd=['ros2', 'run', 'defect_detector', 'defect_detector_node', '--prefix', 'b1'],
+        output='screen'
+    )
+
+    defect_detector_node_2 = ExecuteProcess(
+        cmd=['ros2', 'run', 'defect_detector', 'defect_detector_node', '--prefix', 'b2'],
+        output='screen'
+    )
+
+    defect_detector_node_3 = ExecuteProcess(
+        cmd=['ros2', 'run', 'defect_detector', 'defect_detector_node', '--prefix', 'b3'],
+        output='screen'
+    )
+
+
+    # Call a different launch file with namespace
+    gripper_launch = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource([os.path.join(
+            get_package_share_directory('gripper_controller_python'), 'launch'), '/gripper_position_control.launch.py'])
+    )
+
+    """ gripper_launch_namespace = GroupAction([
+        PushRosNamespace(namespace='gripper1'),
+        gripper_launch,
+    ]) """
+
+    # Launch file from rv2
+    rv2_launch = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource([os.path.join(
+            get_package_share_directory('rv2'), 'launch'), '/rv2.launch.py'])
+    )
+
+
     # ***** RETURN LAUNCH DESCRIPTION ***** #
     return LaunchDescription([
-        gazebo, 
+        gazebo,
+        service_belt_1, service_belt_2, service_belt_3,
+        gripper_launch,
+        spawn_object,
+        defect_detector_node_1, defect_detector_node_2, defect_detector_node_3,
+        #gripper_launch_namespace
+        rv2_launch
     ])
